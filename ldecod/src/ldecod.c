@@ -1180,6 +1180,7 @@ int OpenDecoder(InputParameters *p_Inp)
     { //Normal AVC      
       if((strcasecmp(p_Inp->outfile, "\"\"")!=0) && (strlen(p_Inp->outfile)>0))
       {
+          // JM-TODO: no need to open output file
         if( (strcasecmp(p_Inp->outfile, "\"\"")!=0) && ((p_Vid->p_out_mvc[0]=open(p_Inp->outfile, OPENFLAGS_WRITE, OPEN_PERMISSIONS))==-1) )
         {
           snprintf(errortext, ET_SIZE, "Error open file %s ",p_Inp->outfile);
@@ -1237,6 +1238,18 @@ int OpenDecoder(InputParameters *p_Inp)
 #endif
 
   return DEC_OPEN_NOERR;
+}
+
+int UpdateInputData(uint8_t *buf, int size)
+{
+    put_data_in_annex_b(p_Dec->p_Vid->annex_b, buf, size);
+    return 0;
+}
+
+int SetGetDataProc(void(*get_data_proc)())
+{
+    p_Dec->p_Vid->annex_b->get_data = get_data_proc;
+    return 0;
 }
 
 /************************************

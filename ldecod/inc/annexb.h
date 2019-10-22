@@ -29,6 +29,7 @@ typedef struct annex_b_struct
   
   byte *pBitStreamBuf;  //!< a buffer contains bitstream, the ownership is belong to caller, we won't copy it
   int iBitStreamSize;
+  void (* get_data)();
 } ANNEXB_t;
 
 extern int  get_annex_b_NALU (VideoParameters *p_Vid, NALU_t *nalu, ANNEXB_t *annex_b);

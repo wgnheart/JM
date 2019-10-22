@@ -80,8 +80,11 @@ static inline int getChunk(ANNEXB_t *annex_b)
 static inline int getChunk(ANNEXB_t *annex_b)
 {
     if (!annex_b->pBitStreamBuf || annex_b->iBitStreamSize <= 0) {
-        annex_b->is_eof = TRUE;
-        return 0;
+        annex_b->get_data();
+        if (!annex_b->pBitStreamBuf || annex_b->iBitStreamSize <= 0) {
+            annex_b->is_eof = TRUE;
+            return 0;
+        }
     }
     
     unsigned int readbytes = 0;
@@ -93,9 +96,9 @@ static inline int getChunk(ANNEXB_t *annex_b)
     }
     else {
         memcpy(annex_b->iobuffer, annex_b->pBitStreamBuf, annex_b->iBitStreamSize);
+        readbytes = annex_b->iBitStreamSize;
         annex_b->pBitStreamBuf = NULL;
         annex_b->iBitStreamSize = 0;
-        readbytes = annex_b->iBitStreamSize;
     }
     
     annex_b->is_eof = FALSE;

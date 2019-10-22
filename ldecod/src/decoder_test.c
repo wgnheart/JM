@@ -19,12 +19,15 @@
 #include "win32.h"
 #include "h264decoder.h"
 #include "configfile.h"
+#include "libavformat/avformat.h"
+#include "libavcodec/avcodec.h"
+#include "annexb.h"
 
 #define DECOUTPUT_TEST      0
 
 #define PRINT_OUTPUT_POC    0
 #define BITSTREAM_FILENAME  "/Users/geng.wang/Desktop/test.h264"
-#define DECRECON_FILENAME   "test_dec.yuv"
+#define DECRECON_FILENAME   "/Users/geng.wang/Desktop/test_dec.yuv"
 #define ENCRECON_FILENAME   "test_rec.yuv"
 #define FCFR_DEBUG_FILENAME "fcfr_dec_rpu_stats.txt"
 #define DECOUTPUT_VIEW0_FILENAME  "H264_Decoder_Output_View0.yuv"
@@ -212,6 +215,7 @@ static int WriteOneFrame(DecodedPicList *pDecPic, int hFileOutput0, int hFileOut
  *    main function for JM decoder
  ***********************************************************************
  */
+/*
 int main(int argc, char **argv)
 {
   int iRet;
@@ -274,6 +278,102 @@ int main(int argc, char **argv)
 
   printf("%d frames are decoded.\n", iFramesDecoded);
   return 0;
+}
+*/
+
+static AVFormatContext* m_formatCtx = NULL;
+static AVPacket *pkt = NULL;
+static int32_t bs_size = 0;
+static uint8_t *bs_buf = NULL;
+
+static void _get_data()
+{
+    int ret = av_read_frame(m_formatCtx, pkt);
+    if (ret < 0)
+        return;
+    
+    memcpy(bs_buf, pkt->data, pkt->size);
+    bs_size = pkt->size;
+    UpdateInputData(bs_buf, bs_size);
+}
+
+int main(int argc, char **argv)
+{
+    int iRet;
+    DecodedPicList *pDecPicList;
+    int hFileDecOutput0=-1, hFileDecOutput1=-1;
+    int iFramesOutput=0, iFramesDecoded=0;
+    
+    // step 1, config input params
+    InputParameters InputParams;
+    //get input parameters;
+    Configure(&InputParams, argc, argv);
+    
+    
+    //open decoder;
+    iRet = OpenDecoder(&InputParams);
+    if(iRet != DEC_OPEN_NOERR) {
+        fprintf(stderr, "Open encoder failed: 0x%x!\n", iRet);
+        return -1; //failed;
+    }
+    
+    bs_size = 10 * 1024 * 1024;
+    bs_buf = malloc(bs_size); // 10m
+    
+    m_formatCtx = avformat_alloc_context();
+    if (!m_formatCtx)
+        return -1;
+    
+    int ret = avformat_open_input(&m_formatCtx, "/Users/geng.wang/Desktop/test.h264", NULL, NULL);
+    if (ret < 0)
+        return ret;
+    
+    ret = avformat_find_stream_info(m_formatCtx, NULL);
+    if (ret < 0)
+        return ret;
+    
+    ret = av_find_best_stream(m_formatCtx, AVMEDIA_TYPE_VIDEO, -1, -1, NULL, 0);
+    if (ret < 0)
+        return ret;
+    
+    pkt = av_packet_alloc();
+    SetGetDataProc(_get_data);
+
+    do
+    {
+        iRet = DecodeOneFrame(&pDecPicList);
+        if(iRet==DEC_EOS || iRet==DEC_SUCCEED)
+        {
+            //process the decoded picture, output or display;
+            iFramesOutput += WriteOneFrame(pDecPicList, hFileDecOutput0, hFileDecOutput1, 0);
+            iFramesDecoded++;
+        }
+        else
+        {
+            //error handling;
+            fprintf(stderr, "Error in decoding process: 0x%x\n", iRet);
+        }
+    }while((iRet == DEC_SUCCEED) &&
+           ((p_Dec->p_Inp->iDecFrmNum==0) || (iFramesDecoded < p_Dec->p_Inp->iDecFrmNum))
+           );
+    
+    
+    iRet = FinitDecoder(&pDecPicList);
+    iFramesOutput += WriteOneFrame(pDecPicList, hFileDecOutput0, hFileDecOutput1 , 1);
+    iRet = CloseDecoder();
+    
+    //quit;
+    if(hFileDecOutput0>=0)
+    {
+        close(hFileDecOutput0);
+    }
+    if(hFileDecOutput1>=0)
+    {
+        close(hFileDecOutput1);
+    }
+    
+    printf("%d frames are decoded.\n", iFramesDecoded);
+    return 0;
 }
 
 

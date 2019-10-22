@@ -43,6 +43,8 @@ extern "C" {
 #endif
 
 int OpenDecoder(InputParameters *p_Inp);
+int SetGetDataProc(void(*get_data_proc)());
+int UpdateInputData(uint8_t *buf, int size);
 int DecodeOneFrame(DecodedPicList **ppDecPic);
 int FinitDecoder(DecodedPicList **ppDecPicList);
 int CloseDecoder();
