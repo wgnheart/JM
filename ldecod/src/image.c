@@ -845,7 +845,7 @@ int decode_one_frame(DecoderParams *pDecoder)
     p_Vid->iSliceNumOfCurrPic++;
     current_header = SOS;
   }
-  while(current_header != SOP && current_header !=EOS)
+  while(current_header != SOP && current_header !=EOS && current_header != EOP)
   {
     //no pending slices;
     assert(p_Vid->iSliceNumOfCurrPic < p_Vid->iNumOfSlicesAllocated);
@@ -880,7 +880,7 @@ int decode_one_frame(DecoderParams *pDecoder)
       continue;
     }
 
-    if((current_header != SOP && current_header !=EOS) || (p_Vid->iSliceNumOfCurrPic==0 && current_header == SOP))
+    if((current_header != SOP && current_header !=EOS && current_header != EOP) || (p_Vid->iSliceNumOfCurrPic==0 && current_header == SOP))
     {
        currSlice->current_slice_nr = (short) p_Vid->iSliceNumOfCurrPic;
        p_Vid->dec_picture->max_slice_id = (short) imax(currSlice->current_slice_nr, p_Vid->dec_picture->max_slice_id);
@@ -911,7 +911,7 @@ int decode_one_frame(DecoderParams *pDecoder)
        }
        current_header = SOS;       
     }
-    else
+    else if (current_header != EOP)
     {
       if(ppSliceList[p_Vid->iSliceNumOfCurrPic-1]->mb_aff_frame_flag)
        ppSliceList[p_Vid->iSliceNumOfCurrPic-1]->end_mb_nr_plus1 = p_Vid->FrameSizeInMbs/2;
@@ -1362,7 +1362,7 @@ int read_new_slice(Slice *currSlice)
     if (!pending_nalu)
     {
       if (0 == read_next_nalu(p_Vid, nalu))
-        return EOS;
+        return EOP;
     }
     else
     {

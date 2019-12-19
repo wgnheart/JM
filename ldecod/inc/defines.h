@@ -243,7 +243,8 @@ enum {
   EOS = 1,    //!< End Of Sequence
   SOP = 2,    //!< Start Of Picture
   SOS = 3,     //!< Start Of Slice
-  SOS_CONT = 4
+  EOP = 4,
+  SOS_CONT = 5
 };
 
 // MV Prediction types

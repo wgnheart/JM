@@ -80,7 +80,8 @@ static inline int getChunk(ANNEXB_t *annex_b)
 static inline int getChunk(ANNEXB_t *annex_b)
 {
     if (!annex_b->pBitStreamBuf || annex_b->iBitStreamSize <= 0) {
-        annex_b->get_data();
+        if (annex_b->get_data)
+            annex_b->get_data();
         if (!annex_b->pBitStreamBuf || annex_b->iBitStreamSize <= 0) {
             annex_b->is_eof = TRUE;
             return 0;

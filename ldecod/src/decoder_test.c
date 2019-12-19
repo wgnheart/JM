@@ -337,10 +337,19 @@ int main(int argc, char **argv)
         return ret;
     
     pkt = av_packet_alloc();
-    SetGetDataProc(_get_data);
+    //SetGetDataProc(_get_data);
 
     do
     {
+        
+        int ret = av_read_frame(m_formatCtx, pkt);
+        if (ret < 0)
+            break;
+        
+        memcpy(bs_buf, pkt->data, pkt->size);
+        bs_size = pkt->size;
+        UpdateInputData(bs_buf, bs_size);
+        
         iRet = DecodeOneFrame(&pDecPicList);
         if(iRet==DEC_EOS || iRet==DEC_SUCCEED)
         {

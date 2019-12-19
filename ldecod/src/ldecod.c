@@ -1265,13 +1265,14 @@ int DecodeOneFrame(DecodedPicList **ppDecPicList)
   DecoderParams *pDecoder = p_Dec;
   ClearDecPicList(pDecoder->p_Vid);
   iRet = decode_one_frame(pDecoder);
-  if(iRet == SOP)
+  if(iRet == SOP || iRet == EOP)
   {
     iRet = DEC_SUCCEED;
   }
   else if(iRet == EOS)
   {
     iRet = DEC_EOS;
+    //iRet = DEC_SUCCEED;
   }
   else
   {
